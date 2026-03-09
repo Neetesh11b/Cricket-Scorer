@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cricket">
+<meta name="theme-color" content="#08100a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Cricket Scorer Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#08100a;--surface:#0f1f12;--card:#152018;--border:rgba(76,175,80,0.18);
+  --green:#43a047;--green2:#2e7d32;--lime:#aeea00;--accent:#ffca28;
+  --red:#f44336;--blue:#29b6f6;--orange:#ff8f00;--muted:#4e7a52;--text:#e8f5e9;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 120% 60% at 50% 100%,rgba(67,160,71,0.1) 0%,transparent 60%);pointer-events:none;}
+
+/* ── LAYOUT ── */
+.app{max-width:460px;margin:0 auto;padding:10px 10px 90px;position:relative;z-index:1;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 0 10px;}
+.hdr h1{font-family:'Teko',sans-serif;font-size:1.9rem;letter-spacing:3px;color:var(--lime);text-shadow:0 0 16px rgba(174,234,0,0.3);}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.icon-btn{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:0.8rem;cursor:pointer;font-weight:600;letter-spacing:0.5px;transition:all 0.2s;}
+.icon-btn:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+.icon-btn.active{background:rgba(174,234,0,0.1);border-color:rgba(174,234,0,0.4);color:var(--lime);}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--surface);border-radius:10px;padding:3px;gap:3px;margin-bottom:12px;border:1px solid var(--border);}
+.tab{flex:1;padding:8px 4px;text-align:center;border-radius:8px;font-size:0.7rem;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;cursor:pointer;color:var(--muted);transition:all 0.2s;}
+.tab.active{background:var(--green2);color:white;box-shadow:0 2px 8px rgba(46,125,50,0.4);}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.card-title{font-family:'Teko',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--lime);margin-bottom:10px;}
+
+/* ── SETUP ── */
+.setup-form h2{font-family:'Teko',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--lime);text-align:center;margin-bottom:16px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fg{margin-bottom:12px;}
+.fg label{display:block;font-size:0.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px;}
+.fg input,.fg select{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:500;outline:none;transition:border-color 0.2s;}
+.fg input:focus,.fg select:focus{border-color:var(--lime);}
+.fg select option{background:#0f1f12;}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-family:'Teko',sans-serif;font-size:1.4rem;letter-spacing:3px;cursor:pointer;transition:all 0.2s;}
+.btn-primary{background:linear-gradient(135deg,var(--green),var(--green2));color:white;box-shadow:0 4px 18px rgba(67,160,71,0.35);}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-secondary{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);font-size:1rem;}
+
+/* ── SCORETOP ── */
+.scoretop{position:relative;overflow:hidden;}
+.scoretop::after{content:'🏏';position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:2.8rem;opacity:0.06;}
+.batting-team{font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.main-score{font-family:'Teko',sans-serif;font-size:3.2rem;line-height:1;letter-spacing:1px;}
+.main-score .wkts{color:var(--red);}
+.meta-row{display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;}
+.mi .v{font-family:'Teko',sans-serif;font-size:1.2rem;color:var(--accent);}
+.mi .l{font-size:0.58rem;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+
+/* ── PARTNERSHIP ── */
+.batsmen-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
+.bcard{background:rgba(255,255,255,0.03);border-radius:10px;padding:9px;border:1px solid var(--border);}
+.bcard.on-strike{border-color:var(--lime);background:rgba(174,234,0,0.05);}
+.b-name{font-size:0.72rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.b-runs{font-family:'Teko',sans-serif;font-size:1.5rem;line-height:1;}
+.b-meta{font-size:0.6rem;color:var(--muted);}
+.b-sr{font-size:0.6rem;color:var(--accent);}
+.pmid{text-align:center;}
+.p-runs{font-family:'Teko',sans-serif;font-size:1.1rem;color:var(--accent);}
+.p-lbl{font-size:0.52rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.strike-btn{background:rgba(174,234,0,0.08);border:1px solid rgba(174,234,0,0.25);border-radius:6px;padding:4px 7px;color:var(--lime);font-size:0.62rem;font-weight:600;cursor:pointer;letter-spacing:1px;margin-top:4px;width:100%;text-align:center;}
+
+/* ── OVER BALLS ── */
+.over-lbl{font-size:0.62rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+.balls-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.ball{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Teko',sans-serif;font-size:0.9rem;border:2px solid transparent;transition:all 0.2s;}
+.ball.dot{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1);color:var(--muted);}
+.ball.r1,.ball.r2,.ball.r3{background:rgba(67,160,71,0.18);border-color:var(--green);color:#a5d6a7;}
+.ball.r4{background:rgba(41,182,246,0.18);border-color:var(--blue);color:#81d4fa;}
+.ball.r6{background:rgba(255,202,40,0.18);border-color:var(--accent);color:var(--accent);}
+.ball.wd{background:rgba(255,143,0,0.15);border-color:var(--orange);color:var(--orange);font-size:0.58rem;}
+.ball.nb{background:rgba(244,67,54,0.15);border-color:#ff5722;color:#ff8a65;font-size:0.58rem;}
+.ball.wkt{background:rgba(244,67,54,0.22);border-color:var(--red);color:#ef9a9a;}
+.ball.nxt{background:transparent;border:2px dashed rgba(174,234,0,0.4);color:var(--lime);animation:blink 1.1s ease-in-out infinite;}
+.ball.empty{background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.05);}
+@keyframes blink{0%,100%{border-color:rgba(174,234,0,0.3);}50%{border-color:var(--lime);box-shadow:0 0 8px rgba(174,234,0,0.25);}}
+
+/* ── LAST EVENT ── */
+.last-ev{text-align:center;padding:7px 12px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);margin-bottom:10px;font-size:0.83rem;color:var(--muted);min-height:34px;display:flex;align-items:center;justify-content:center;}
+.last-ev .ev{color:var(--accent);font-weight:700;font-size:1rem;}
+
+/* ── SCORE PAD ── */
+.pad-lbl{font-size:0.62rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:10px;}
+.btn-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:7px;}
+.sb{padding:13px 4px;border:none;border-radius:10px;font-family:'Teko',sans-serif;font-size:1.2rem;letter-spacing:0.5px;cursor:pointer;transition:all 0.12s;}
+.sb:active{transform:scale(0.91);}
+.sb.dot{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid rgba(255,255,255,0.08);}
+.sb.r1{background:rgba(67,160,71,0.16);color:#a5d6a7;border:1px solid rgba(67,160,71,0.3);}
+.sb.r2{background:rgba(67,160,71,0.22);color:#a5d6a7;border:1px solid rgba(67,160,71,0.35);}
+.sb.r3{background:rgba(67,160,71,0.28);color:#a5d6a7;border:1px solid rgba(67,160,71,0.4);}
+.sb.r4{background:rgba(41,182,246,0.18);color:#81d4fa;border:1px solid rgba(41,182,246,0.35);}
+.sb.r6{background:rgba(255,202,40,0.18);color:var(--accent);border:1px solid rgba(255,202,40,0.4);grid-column:span 2;font-size:1.4rem;}
+.sb.wd{background:rgba(255,143,0,0.14);color:var(--orange);border:1px solid rgba(255,143,0,0.3);font-size:0.85rem;}
+.sb.nb{background:rgba(255,87,34,0.14);color:#ff8a65;border:1px solid rgba(255,87,34,0.3);font-size:0.85rem;}
+.sb.wkt{background:rgba(244,67,54,0.18);color:#ef9a9a;border:1px solid rgba(244,67,54,0.4);grid-column:span 2;font-size:0.95rem;}
+.sb:hover{filter:brightness(1.2);}
+
+/* ── VOICE ── */
+.voice-btn{width:100%;padding:10px;background:rgba(41,182,246,0.08);border:1px solid rgba(41,182,246,0.25);border-radius:10px;color:var(--blue);font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;margin-top:7px;}
+.voice-btn.on{background:rgba(244,67,54,0.12);border-color:var(--red);color:#ef9a9a;animation:vp 0.9s ease-in-out infinite;}
+@keyframes vp{0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,0.25);}50%{box-shadow:0 0 0 6px rgba(244,67,54,0);}}
+.voice-out{margin-top:5px;padding:6px 10px;background:rgba(255,255,255,0.02);border-radius:7px;font-size:0.75rem;color:var(--muted);min-height:28px;font-style:italic;}
+
+/* ── ACTIONS ── */
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;}
+.act{padding:9px 4px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:var(--muted);font-size:0.68rem;font-weight:600;letter-spacing:0.8px;cursor:pointer;transition:all 0.18s;text-transform:uppercase;}
+.act:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+.act.undo{border-color:rgba(255,143,0,0.3);color:var(--orange);}
+.act.end{border-color:rgba(244,67,54,0.3);color:#ef9a9a;background:rgba(244,67,54,0.06);}
+
+/* ── TARGET BAR ── */
+.tgt-bar{background:linear-gradient(135deg,rgba(244,67,54,0.12),rgba(244,67,54,0.04));border:1px solid rgba(244,67,54,0.3);border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.tgt-left .tgt-n{font-family:'Teko',sans-serif;font-size:1.8rem;color:var(--red);}
+.tgt-left .tgt-l{font-size:0.58rem;color:#ef9a9a;letter-spacing:1.5px;text-transform:uppercase;}
+.tgt-right{text-align:right;}
+.tgt-right .need{font-family:'Teko',sans-serif;font-size:1.1rem;color:#ef9a9a;}
+.tgt-right .need-l{font-size:0.58rem;color:var(--muted);}
+
+/* ── OVER HISTORY ── */
+.ovr-row{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;}
+.ovr-row:last-child{border-bottom:none;}
+.ovr-n{color:var(--muted);font-weight:700;min-width:38px;font-size:0.68rem;}
+.ovr-balls{display:flex;gap:3px;flex:1;flex-wrap:wrap;}
+.bm{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;}
+.ovr-r{color:var(--accent);font-weight:700;min-width:26px;text-align:right;font-family:'Teko',sans-serif;font-size:0.95rem;}
+
+/* ── SCORECARD ── */
+.sc-table{width:100%;border-collapse:collapse;}
+.sc-table th{font-size:0.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:5px 6px;text-align:left;font-weight:600;}
+.sc-table th:not(:first-child){text-align:right;}
+.sc-table td{padding:7px 6px;font-size:0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.sc-table td:not(:first-child){text-align:right;font-family:'Teko',sans-serif;font-size:0.95rem;}
+.bat-name{font-weight:600;}
+.bat-how{font-size:0.62rem;color:var(--muted);display:block;}
+.sc-table tr.out .bat-name{color:#ef9a9a;}
+.sc-table tr.notout .bat-name{color:#a5d6a7;}
+.sc-foot{display:flex;justify-content:space-between;padding:7px 6px;font-size:0.78rem;}
+.sc-foot.total{font-weight:700;color:var(--text);border-top:1px solid var(--border);}
+.sc-foot.extras{color:var(--muted);}
+
+/* ── MATCH HISTORY ── */
+.hist-empty{text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;line-height:1.8;}
+.match-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.18s;}
+.match-card:hover{background:rgba(255,255,255,0.06);border-color:rgba(174,234,0,0.25);}
+.mc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.mc-date{font-size:0.65rem;color:var(--muted);}
+.mc-winner{font-size:0.72rem;font-weight:600;color:var(--lime);}
+.mc-scores{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mc-team{text-align:center;}
+.mc-tname{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.mc-tscore{font-family:'Teko',sans-serif;font-size:1.3rem;color:var(--text);}
+.mc-result{font-size:0.7rem;color:var(--muted);text-align:center;margin-top:4px;padding-top:6px;border-top:1px solid var(--border);}
+.delete-btn{background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.25);border-radius:6px;padding:3px 8px;color:#ef9a9a;font-size:0.65rem;cursor:pointer;}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.modal-bg.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:460px;transform:translateY(100%);transition:transform 0.3s ease;}
+.modal-bg.show .modal{transform:translateY(0);}
+.modal h3{font-family:'Teko',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--red);margin-bottom:14px;text-align:center;}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.mbtn{padding:11px;border-radius:10px;border:none;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;}
+.mbtn.cancel{background:rgba(255,255,255,0.06);color:var(--muted);}
+.mbtn.confirm{background:var(--red);color:white;}
+
+/* ── RESULT ── */
+.result-wrap{text-align:center;padding:30px 10px;}
+.res-trophy{font-size:4rem;margin-bottom:10px;}
+.res-title{font-family:'Teko',sans-serif;font-size:2.4rem;letter-spacing:4px;color:var(--lime);}
+.res-sub{color:var(--muted);font-size:0.95rem;margin:6px 0 18px;line-height:1.6;}
+.res-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.res-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.rc-t{font-size:0.62rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.rc-s{font-family:'Teko',sans-serif;font-size:1.9rem;}
+.res-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-70px);background:var(--card);border:1px solid rgba(174,234,0,0.3);border-radius:10px;padding:8px 16px;font-size:0.82rem;font-weight:600;color:var(--lime);z-index:300;transition:transform 0.3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── OFFLINE BADGE ── */
+.offline-badge{display:none;position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(244,67,54,0.85);border-radius:20px;padding:5px 14px;font-size:0.72rem;font-weight:600;color:white;z-index:100;letter-spacing:1px;}
+.offline-badge.show{display:block;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════ HOME SCREEN ══════════════ -->
+  <div id="screen-home" class="screen active">
+    <div class="hdr">
+      <h1>🏏 SCORER By Neetesh 🏏</h1>
+      <div class="hdr-right">
+        <div class="icon-btn" id="offline-indicator">📶</div>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:20px;">
+      <div style="font-size:3rem;margin-bottom:10px;">🏏</div>
+      <div style="font-family:'Teko',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--lime);margin-bottom:6px;">CRICKET SCORER PRO</div>
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:18px;line-height:1.6;">Ball-by-ball scoring • Match history • Offline support</div>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="goScreen('screen-setup')">▶ NEW MATCH</button>
+      <button class="btn btn-secondary" onclick="goScreen('screen-history')">📋 MATCH HISTORY</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ QUICK GUIDE</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:2;">
+        🎯 Tap buttons se ball-by-ball score karo<br>
+        🎙️ Ya voice se — "chaar", "chhakka", "wicket"<br>
+        💾 Match automatically save hota hai<br>
+        📴 Internet band ho tab bhi kaam karta hai<br>
+        📲 Home screen pe install karo — app jaisa!
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SETUP ══════════════ -->
+  <div id="screen-setup" class="screen">
+    <div class="hdr">
+      <h1>🏏 SETUP</h1>
+      <div class="icon-btn" onclick="goScreen('screen-home')">✕ Back</div>
+    </div>
+    <div class="card setup-form">
+      <h2>MATCH SETUP</h2>
+      <div class="row2">
+        <div class="fg"><label>Team 1 (Bats First)</label><input id="t1" placeholder="Team A" maxlength="18"></div>
+        <div class="fg"><label>Team 2</label><input id="t2" placeholder="Team B" maxlength="18"></div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>Total Overs</label>
+          <select id="overs-sel">
+            <option value="5">5 Overs</option>
+            <option value="6">6 Overs</option>
+            <option value="10" selected>10 Overs</option>
+            <option value="20">20 Overs</option>
+            <option value="50">50 Overs</option>
+            <option value="custom">Custom...</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Wickets</label>
+          <select id="wkts-sel">
+            <option value="10" selected>10</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="custom">Custom...</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2" id="custom-row" style="display:none">
+        <div class="fg"><label>Custom Overs</label><input id="cust-ov" type="number" min="1" max="99" placeholder="e.g. 15"></div>
+        <div class="fg"><label>Custom Wickets</label><input id="cust-wk" type="number" min="1" max="10" placeholder="e.g. 8"></div>
+      </div>
+      <div class="fg"><label>Team 1 Players (comma se alag karo)</label><input id="p1" placeholder="e.g. Rahul, Virat, Rohit..."></div>
+      <div class="fg"><label>Team 2 Players</label><input id="p2" placeholder="e.g. Dhoni, Jadeja, Bumrah..."></div>
+      <button class="btn btn-primary" onclick="startMatch()">▶ START MATCH</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ GAME ══════════════ -->
+  <div id="screen-game" class="screen">
+    <div class="hdr">
+      <h1>🏏 LIVE</h1>
+      <div class="hdr-right">
+        <div class="icon-btn" id="innings-badge">1st Inn.</div>
+        <div class="icon-btn" onclick="confirmExit()">✕</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('score')">Score</div>
+      <div class="tab" onclick="showTab('overs')">Overs</div>
+      <div class="tab" onclick="showTab('card')">Scorecard</div>
+    </div>
+
+    <!-- Score Tab -->
+    <div id="tab-score">
+      <div class="tgt-bar" id="tgt-bar" style="display:none">
+        <div class="tgt-left"><div class="tgt-l">Target</div><div class="tgt-n" id="tgt-num">0</div></div>
+        <div class="tgt-right"><div class="need" id="need-txt"></div><div class="need-l">runs needed</div></div>
+      </div>
+      <div class="card scoretop">
+        <div class="batting-team" id="bat-team-lbl">TEAM A BATTING</div>
+        <div class="main-score" id="main-sc">0<span class="wkts">/0</span></div>
+        <div class="meta-row">
+          <div class="mi"><div class="v" id="meta-ov">0.0</div><div class="l">Overs</div></div>
+          <div class="mi"><div class="v" id="meta-rr">0.00</div><div class="l">Run Rate</div></div>
+          <div class="mi"><div class="v" id="meta-bl">—</div><div class="l">Balls Left</div></div>
+          <div class="mi" id="rrr-mi" style="display:none"><div class="v" id="meta-rrr">0.00</div><div class="l">Req.RR</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">⚔️ AT CREASE</div>
+        <div class="batsmen-row">
+          <div class="bcard" id="b0-card">
+            <div class="b-name" id="b0-name">Bat 1</div>
+            <div class="b-runs" id="b0-runs">0</div>
+            <div class="b-meta" id="b0-balls">0b</div>
+            <div class="b-sr" id="b0-sr">SR 0.0</div>
+          </div>
+          <div class="pmid">
+            <div class="p-runs" id="p-runs">0</div>
+            <div class="p-lbl">Pship</div>
+            <button class="strike-btn" onclick="toggleStrike()">⇄ Strike</button>
+          </div>
+          <div class="bcard" id="b1-card">
+            <div class="b-name" id="b1-name">Bat 2</div>
+            <div class="b-runs" id="b1-runs">0</div>
+            <div class="b-meta" id="b1-balls">0b</div>
+            <div class="b-sr" id="b1-sr">SR 0.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="over-lbl" id="over-lbl">OVER 1</div>
+      <div class="balls-row" id="cur-balls" style="margin-bottom:10px;"></div>
+      <div class="last-ev" id="last-ev"><span>🟢 Ready — Scoring shuru karo!</span></div>
+      <div class="card">
+        <div class="pad-lbl">Ball ka Result</div>
+        <div class="btn-grid">
+          <button class="sb dot" onclick="addBall('dot',0)">• DOT</button>
+          <button class="sb r1" onclick="addBall('r1',1)">1</button>
+          <button class="sb r2" onclick="addBall('r2',2)">2</button>
+          <button class="sb r3" onclick="addBall('r3',3)">3</button>
+          <button class="sb r4" onclick="addBall('r4',4)">4️⃣ FOUR</button>
+          <button class="sb r6" onclick="addBall('r6',6)">⚡ SIX ⚡</button>
+          <button class="sb wd" onclick="addBall('wd',1,true)">WIDE</button>
+          <button class="sb nb" onclick="addBall('nb',1,true)">NO BALL</button>
+          <button class="sb wkt" onclick="openWktModal()">🔴 WICKET OUT</button>
+        </div>
+        <button class="voice-btn" id="v-btn" onclick="toggleVoice()">🎙️ <span id="v-txt">Voice — Bol ke Score Karo</span></button>
+        <div class="voice-out" id="v-out">Hindi ya English mein bolo: "chaar", "chhakka", "wide", "wicket"...</div>
+      </div>
+      <div class="actions">
+        <button class="act undo" onclick="undoLast()">↩ Undo</button>
+        <button class="act" onclick="toggleStrike()">⇄ Strike</button>
+        <button class="act end" onclick="endInnings()">🔄 End Inn.</button>
+      </div>
+    </div>
+
+    <!-- Overs Tab -->
+    <div id="tab-overs" style="display:none">
+      <div class="card"><div class="card-title">📋 OVER HISTORY</div><div id="ovr-hist"></div></div>
+    </div>
+
+    <!-- Scorecard Tab -->
+    <div id="tab-card" style="display:none"><div id="sc-content"></div></div>
+  </div>
+
+  <!-- ══════════════ HISTORY ══════════════ -->
+  <div id="screen-history" class="screen">
+    <div class="hdr">
+      <h1>📋 HISTORY</h1>
+      <div class="icon-btn" onclick="goScreen('screen-home')">✕ Back</div>
+    </div>
+    <div id="hist-list"></div>
+  </div>
+
+  <!-- ══════════════ MATCH DETAIL ══════════════ -->
+  <div id="screen-detail" class="screen">
+    <div class="hdr">
+      <h1>🏏 MATCH</h1>
+      <div class="icon-btn" onclick="goScreen('screen-history')">← Back</div>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Wicket Modal -->
+<div class="modal-bg" id="wkt-modal">
+  <div class="modal">
+    <h3>🔴 WICKET!</h3>
+    <div class="fg"><label>Batsman Out</label><select id="wkt-who"></select></div>
+    <div class="fg"><label>Dismissal Type</label>
+      <select id="wkt-type">
+        <option>Bowled</option><option>Caught</option><option>LBW</option>
+        <option>Run Out</option><option>Stumped</option><option>Hit Wicket</option>
+        <option>Caught & Bowled</option>
+      </select>
+    </div>
+    <div class="fg"><label>Fielder/Bowler (optional)</label><input id="wkt-fielder" placeholder="e.g. c Kohli b Bumrah"></div>
+    <div class="fg"><label>Next Batsman</label><input id="wkt-next" placeholder="Agla player ka naam"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeWktModal()">Cancel</button>
+      <button class="mbtn confirm" onclick="confirmWkt()">OUT ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exit Confirm Modal -->
+<div class="modal-bg" id="exit-modal">
+  <div class="modal">
+    <h3 style="color:var(--orange)">⚠️ EXIT MATCH?</h3>
+    <p style="text-align:center;color:var(--muted);font-size:0.85rem;margin-bottom:16px;">Match band hoga. Progress save ho jayega.</p>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeExitModal()">Continue</button>
+      <button class="mbtn confirm" style="background:var(--orange);" onclick="exitMatch()">Exit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="offline-badge" id="offline-badge">📴 Offline Mode</div>
+
+<script>
+// ══════════════════════════ INDEXEDDB ══════════════════════════
+const DB_NAME = 'CricketScorer', DB_VER = 1, STORE = 'matches';
+let db = null;
+
+function openDB(){
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if(!d.objectStoreNames.contains(STORE)){
+        const store = d.createObjectStore(STORE, {keyPath:'id'});
+        store.createIndex('date','date',{unique:false});
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function saveMatch(matchData){
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(matchData);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+function getAllMatches(){
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE,'readonly');
+    const req = tx.objectStore(STORE).index('date').getAll();
+    req.onsuccess = () => res(req.result.reverse());
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function deleteMatch(id){
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+// ══════════════════════════ MATCH STATE ══════════════════════════
+let M = null;
+
+function freshMatch(){
+  return {
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    team1:'Team A', team2:'Team B',
+    totalOvers:10, maxWickets:10,
+    players:[[], []],
+    innings:1, completed:false, result:'',
+    data:[
+      freshInnings(), freshInnings()
+    ]
+  };
+}
+function freshInnings(){
+  return {
+    runs:0, wickets:0, balls:[], curOver:[], extras:{wide:0,nb:0},
+    batsmen:[{name:'',runs:0,balls:0,out:false,how:''},{name:'',runs:0,balls:0,out:false,how:''}],
+    dismissed:[], // full list of dismissed batsmen for scorecard
+    onStrike:0, pRuns:0, pBalls:0, nextBatIdx:2
+  };
+}
+
+function inn(){ return M.data[M.innings-1]; }
+function legalBalls(){ return inn().balls.filter(b=>!b.extra).length; }
+function completedOvers(){ return Math.floor(legalBalls()/6); }
+function ballsInOver(){ return legalBalls()%6; }
+function oversStr(){ return completedOvers()+'.'+ballsInOver(); }
+function ballsLeft(){ return M.totalOvers*6 - legalBalls(); }
+function runRate(){ const b=legalBalls(); return b===0?'0.00':(inn().runs/(b/6)).toFixed(2); }
+function reqRR(){
+  const need=M.data[0].runs+1-inn().runs, balls=ballsLeft();
+  if(balls<=0) return '∞';
+  return (need/(balls/6)).toFixed(2);
+}
+
+// ══════════════════════════ SETUP ══════════════════════════
+document.getElementById('overs-sel').addEventListener('change',function(){
+  document.getElementById('custom-row').style.display = this.value==='custom'?'grid':'none';
+});
+
+function parsePlayers(str, fb){
+  if(!str.trim()) return Array.from({length:11},(_,i)=>fb+(i+1));
+  return str.split(',').map(s=>s.trim()).filter(Boolean);
+}
+
+function startMatch(){
+  M = freshMatch();
+  M.team1 = document.getElementById('t1').value.trim()||'Team A';
+  M.team2 = document.getElementById('t2').value.trim()||'Team B';
+  const ov=document.getElementById('overs-sel').value;
+  M.totalOvers = ov==='custom'?parseInt(document.getElementById('cust-ov').value)||10:parseInt(ov);
+  const wk=document.getElementById('wkts-sel').value;
+  M.maxWickets = wk==='custom'?parseInt(document.getElementById('cust-wk').value)||10:parseInt(wk);
+  M.players[0]=parsePlayers(document.getElementById('p1').value,'P');
+  M.players[1]=parsePlayers(document.getElementById('p2').value,'P');
+
+  for(let i=0;i<2;i++){
+    M.data[i].batsmen[0].name=M.players[i][0]||'Batsman 1';
+    M.data[i].batsmen[1].name=M.players[i][1]||'Batsman 2';
+    M.data[i].nextBatIdx=2;
+  }
+
+  goScreen('screen-game');
+  document.getElementById('innings-badge').textContent='1st Inn.';
+  document.getElementById('tgt-bar').style.display='none';
+  document.getElementById('rrr-mi').style.display='none';
+  document.getElementById('ovr-hist').innerHTML='';
+  showTab('score');
+  updateUI();
+  autoSave();
+}
+
+// ══════════════════════════ BALL LOGIC ══════════════════════════
+function addBall(type, runs, isExtra=false){
+  const d=inn();
+  const ball={type,runs,extra:isExtra};
+  d.runs+=runs;
+  d.balls.push(ball);
+  if(!isExtra) d.curOver.push(ball);
+
+  const striker=d.batsmen[d.onStrike];
+  if(!isExtra){
+    striker.runs+=runs;
+    striker.balls++;
+    d.pRuns+=runs;
+    d.pBalls++;
+  }
+  if(isExtra) d.extras[type]=(d.extras[type]||0)+1;
+  if(!isExtra&&(runs===1||runs===3)) rotateStrike();
+
+  if(!isExtra&&ballsInOver()===0&&legalBalls()>0){
+    const ovRuns=d.curOver.reduce((s,b)=>s+b.runs,0);
+    addOvrRow(completedOvers(),[...d.curOver],ovRuns);
+    d.curOver=[];
+    rotateStrike();
+    showToast(`Over ${completedOvers()} — ${ovRuns} runs`);
+  }
+
+  if(d.wickets>=M.maxWickets||legalBalls()>=M.totalOvers*6){ endInnings(); return; }
+  if(M.innings===2){ const tgt=M.data[0].runs+1; if(d.runs>=tgt){ declareWinner(); return; } }
+
+  setLastEv(type,runs);
+  updateUI();
+  autoSave();
+}
+
+function rotateStrike(){ inn().onStrike=1-inn().onStrike; }
+function toggleStrike(){ rotateStrike(); updateUI(); showToast('Strike changed!'); }
+
+function undoLast(){
+  const d=inn();
+  if(!d.balls.length){ showToast('Nothing to undo!'); return; }
+  const last=d.balls.pop();
+  d.runs-=last.runs;
+  if(!last.extra){
+    d.curOver.pop();
+    d.batsmen[d.onStrike].runs-=last.runs;
+    d.batsmen[d.onStrike].balls--;
+    d.pRuns-=last.runs;
+    d.pBalls--;
+    if(last.runs===1||last.runs===3) rotateStrike();
+  }
+  if(last.type==='wkt') d.wickets--;
+  document.getElementById('last-ev').innerHTML='<span>↩ Undone</span>';
+  updateUI(); autoSave();
+  showToast('Undone!');
+}
+
+// ══════════════════════════ WICKET MODAL ══════════════════════════
+function openWktModal(){
+  const d=inn();
+  const sel=document.getElementById('wkt-who');
+  sel.innerHTML=`<option value="${d.onStrike}">${d.batsmen[d.onStrike].name} (on strike)</option>
+    <option value="${1-d.onStrike}">${d.batsmen[1-d.onStrike].name}</option>`;
+  const nxt=M.players[M.innings-1][d.nextBatIdx]||'';
+  document.getElementById('wkt-next').value=nxt;
+  document.getElementById('wkt-fielder').value='';
+  document.getElementById('wkt-modal').classList.add('show');
+}
+function closeWktModal(){ document.getElementById('wkt-modal').classList.remove('show'); }
+
+function confirmWkt(){
+  const d=inn();
+  const who=parseInt(document.getElementById('wkt-who').value);
+  const how=document.getElementById('wkt-type').value;
+  const fielder=document.getElementById('wkt-fielder').value.trim();
+  const next=document.getElementById('wkt-next').value.trim();
+  const howFull=fielder?`${how} (${fielder})`:how;
+
+  // Save dismissed batsman
+  d.dismissed.push({name:d.batsmen[who].name, runs:d.batsmen[who].runs, balls:d.batsmen[who].balls, how:howFull});
+  d.wickets++;
+
+  // Bring in new batsman
+  const newName=next||(M.players[M.innings-1][d.nextBatIdx]||`Batsman ${d.nextBatIdx+1}`);
+  d.batsmen[who]={name:newName,runs:0,balls:0,out:false,how:''};
+  d.nextBatIdx++;
+  d.onStrike=who;
+  d.pRuns=0; d.pBalls=0;
+
+  const ball={type:'wkt',runs:0,extra:false};
+  d.balls.push(ball);
+  d.curOver.push(ball);
+
+  closeWktModal();
+  if(d.wickets>=M.maxWickets||legalBalls()>=M.totalOvers*6){ endInnings(); return; }
+  setLastEv('wkt',0);
+  updateUI(); autoSave();
+  showToast(`Wicket! ${d.dismissed[d.dismissed.length-1].name} OUT`);
+}
+
+// ══════════════════════════ INNINGS / RESULT ══════════════════════════
+function endInnings(){
+  if(M.innings===1){
+    M.innings=2;
+    document.getElementById('innings-badge').textContent='2nd Inn.';
+    document.getElementById('tgt-bar').style.display='flex';
+    document.getElementById('rrr-mi').style.display='block';
+    document.getElementById('ovr-hist').innerHTML='';
+    showToast(`${M.team1}: ${M.data[0].runs}/${M.data[0].wickets} — 2nd Innings!`);
+    updateUI(); autoSave();
+  } else { declareWinner(); }
+}
+
+function declareWinner(){
+  const d1=M.data[0],d2=M.data[1],tgt=d1.runs+1;
+  let winner,result;
+  if(d2.runs>=tgt){ const w=M.maxWickets-d2.wickets; winner=M.team2; result=`${M.team2} won by ${w} wicket${w!==1?'s':''}`; }
+  else { const r=d1.runs-d2.runs; winner=M.team1; result=`${M.team1} won by ${r} run${r!==1?'s':''}`; }
+
+  M.completed=true; M.result=result; M.winner=winner;
+  autoSave().then(()=>{
+    showResult(winner, result, d1, d2);
+  });
+}
+
+function showResult(winner, result, d1, d2){
+  // Replace game screen with result
+  const gs=document.getElementById('screen-game');
+  // Create result div inside game screen
+  let rv=document.getElementById('inline-result');
+  if(!rv){ rv=document.createElement('div'); rv.id='inline-result'; gs.appendChild(rv); }
+  rv.innerHTML=`<div class="result-wrap">
+    <div class="res-trophy">🏆</div>
+    <div class="res-title">${winner} WINS!</div>
+    <div class="res-sub">${result}</div>
+    <div class="res-cards">
+      <div class="res-card"><div class="rc-t">${M.team1}</div><div class="rc-s">${d1.runs}/${d1.wickets}</div></div>
+      <div class="res-card"><div class="rc-t">${M.team2}</div><div class="rc-s">${d2.runs}/${d2.wickets}</div></div>
+    </div>
+    <div class="res-btns">
+      <button class="btn btn-secondary" style="font-size:0.85rem;" onclick="goScreen('screen-history');loadHistory()">📋 History</button>
+      <button class="btn btn-primary" onclick="goScreen('screen-home')">🏠 Home</button>
+    </div>
+  </div>`;
+
+  // Hide game elements
+  ['tab-score','tab-overs','tab-card'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  document.querySelector('.tabs').style.display='none';
+  rv.style.display='block';
+}
+
+// ══════════════════════════ UI UPDATE ══════════════════════════
+function updateUI(){
+  const d=inn();
+  const batTeam=M.innings===1?M.team1:M.team2;
+  document.getElementById('bat-team-lbl').textContent=batTeam.toUpperCase()+' BATTING';
+  document.getElementById('main-sc').innerHTML=`${d.runs}<span class="wkts">/${d.wickets}</span>`;
+  document.getElementById('meta-ov').textContent=oversStr();
+  document.getElementById('meta-rr').textContent=runRate();
+  document.getElementById('meta-bl').textContent=ballsLeft();
+  document.getElementById('over-lbl').textContent=`OVER ${completedOvers()+1}`;
+  if(M.innings===2){
+    const tgt=M.data[0].runs+1;
+    document.getElementById('tgt-num').textContent=tgt;
+    const need=tgt-d.runs, bl=ballsLeft();
+    document.getElementById('need-txt').textContent=`${need} in ${bl} ball${bl!==1?'s':''}`;
+    document.getElementById('meta-rrr').textContent=reqRR();
+  }
+  [0,1].forEach(i=>{
+    const b=d.batsmen[i];
+    document.getElementById(`b${i}-card`).className='bcard'+(d.onStrike===i?' on-strike':'');
+    document.getElementById(`b${i}-name`).textContent=b.name+(d.onStrike===i?' *':'');
+    document.getElementById(`b${i}-runs`).textContent=b.runs;
+    document.getElementById(`b${i}-balls`).textContent=b.balls+'b';
+    document.getElementById(`b${i}-sr`).textContent='SR '+(b.balls>0?((b.runs/b.balls)*100).toFixed(1):'0.0');
+  });
+  document.getElementById('p-runs').textContent=d.pRuns;
+  renderCurOver();
+  renderScorecard();
+}
+
+function renderCurOver(){
+  const d=inn(), row=document.getElementById('cur-balls');
+  row.innerHTML='';
+  d.curOver.forEach(b=>{ const el=document.createElement('div'); el.className='ball '+bClass(b); el.textContent=bLabel(b); row.appendChild(el); });
+  const legal=d.curOver.filter(b=>!b.extra).length;
+  for(let i=legal;i<6;i++){ const el=document.createElement('div'); el.className='ball '+(i===legal?'nxt':'empty'); el.textContent=i===legal?'▶':''; row.appendChild(el); }
+}
+
+function bClass(b){
+  if(b.type==='wkt') return 'wkt'; if(b.type==='wd') return 'wd'; if(b.type==='nb') return 'nb';
+  return {dot:'dot',r1:'r1',r2:'r2',r3:'r3',r4:'r4',r6:'r6'}[b.type]||'dot';
+}
+function bLabel(b){
+  if(b.type==='wkt') return 'W'; if(b.type==='wd') return 'WD'; if(b.type==='nb') return 'NB';
+  return b.runs.toString();
+}
+function bmStyle(b){
+  const s={wkt:'rgba(244,67,54,0.3)',wd:'rgba(255,143,0,0.2)',nb:'rgba(255,87,34,0.2)',dot:'rgba(255,255,255,0.06)',r1:'rgba(67,160,71,0.2)',r2:'rgba(67,160,71,0.25)',r3:'rgba(67,160,71,0.3)',r4:'rgba(41,182,246,0.2)',r6:'rgba(255,202,40,0.2)'};
+  const c={wkt:'#ef9a9a',wd:'#ffa726',nb:'#ff8a65',dot:'#4e7a52',r1:'#a5d6a7',r2:'#a5d6a7',r3:'#a5d6a7',r4:'#81d4fa',r6:'#ffca28'};
+  return `background:${s[b.type]||s.dot};color:${c[b.type]||c.dot};`;
+}
+
+function addOvrRow(num, balls, runs){
+  const list=document.getElementById('ovr-hist');
+  const row=document.createElement('div'); row.className='ovr-row';
+  const bHtml=balls.map(b=>`<div class="bm" style="${bmStyle(b)}">${bLabel(b)}</div>`).join('');
+  row.innerHTML=`<div class="ovr-n">OVR ${num}</div><div class="ovr-balls">${bHtml}</div><div class="ovr-r">${runs}</div>`;
+  list.insertBefore(row,list.firstChild);
+}
+
+function renderScorecard(){
+  let html='';
+  [0,1].forEach(i=>{
+    if(i===1&&M.innings===1) return;
+    const d=M.data[i], team=i===0?M.team1:M.team2;
+    html+=`<div class="card" style="margin-bottom:10px;"><div class="card-title">${team}</div>
+    <table class="sc-table"><thead><tr><th>Batsman</th><th>R</th><th>B</th><th>SR</th></tr></thead><tbody>`;
+
+    // Dismissed batsmen
+    d.dismissed.forEach(b=>{
+      const sr=b.balls>0?((b.runs/b.balls)*100).toFixed(1):'0.0';
+      html+=`<tr class="out"><td><div class="bat-name">${b.name}</div><div class="bat-how">${b.how}</div></td><td>${b.runs}</td><td>${b.balls}</td><td>${sr}</td></tr>`;
+    });
+    // Current batsmen
+    d.batsmen.forEach(b=>{
+      const sr=b.balls>0?((b.runs/b.balls)*100).toFixed(1):'0.0';
+      html+=`<tr class="notout"><td><div class="bat-name">${b.name}</div><div class="bat-how">not out</div></td><td>${b.runs}</td><td>${b.balls}</td><td>${sr}</td></tr>`;
+    });
+
+    const ext=(d.extras.wide||0)+(d.extras.nb||0);
+    html+=`</tbody></table>
+    <div class="sc-foot extras"><span>Extras</span><span>${ext} (${d.extras.wide||0}wd, ${d.extras.nb||0}nb)</span></div>
+    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${i===0?oversStr():oversStr()} ov)</span></div>
+    </div>`;
+  });
+  document.getElementById('sc-content').innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:20px;font-size:0.85rem;">Scorecard match shuru hone ke baad yahan aayegi</p>';
+}
+
+function setLastEv(type,runs){
+  const msgs={dot:'⚪ Dot Ball',r1:'🟢 1 Run',r2:'🟢 2 Runs',r3:'🟢 3 Runs',r4:'🔵 FOUR! +4',r6:'⭐ SIX! +6',wd:'🟠 Wide (+1)',nb:'🔴 No Ball (+1)',wkt:'💥 WICKET!'};
+  document.getElementById('last-ev').innerHTML=`<span class="ev">${msgs[type]||type}</span>`;
+}
+
+// ══════════════════════════ TABS ══════════════════════════
+function showTab(name){
+  ['score','overs','card'].forEach(t=>{ document.getElementById('tab-'+t).style.display=t===name?'block':'none'; });
+  document.querySelectorAll('.tab').forEach((el,i)=>{ el.classList.toggle('active',['score','overs','card'][i]===name); });
+  if(name==='card') renderScorecard();
+}
+
+// ══════════════════════════ SCREEN NAV ══════════════════════════
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screen-history') loadHistory();
+  if(id==='screen-game'){
+    document.querySelector('.tabs').style.display='flex';
+    const rv=document.getElementById('inline-result');
+    if(rv) rv.style.display='none';
+  }
+}
+
+function confirmExit(){ document.getElementById('exit-modal').classList.add('show'); }
+function closeExitModal(){ document.getElementById('exit-modal').classList.remove('show'); }
+function exitMatch(){ closeExitModal(); autoSave().then(()=>goScreen('screen-home')); }
+
+// ══════════════════════════ HISTORY ══════════════════════════
+async function loadHistory(){
+  const list=document.getElementById('hist-list');
+  try {
+    const matches=await getAllMatches();
+    if(!matches.length){
+      list.innerHTML=`<div class="hist-empty">🏏<br><br>Abhi koi match save nahi hua<br><span style="font-size:0.75rem;">Pehla match khelo!</span></div>`;
+      return;
+    }
+    list.innerHTML=matches.map(m=>{
+      const dt=new Date(m.date);
+      const dStr=dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+      const tStr=dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+      const d1=m.data[0], d2=m.data[1];
+      const inn2played=m.innings===2||m.completed;
+      return `<div class="match-card" onclick="showMatchDetail('${m.id}')">
+        <div class="mc-top">
+          <div class="mc-date">${dStr} ${tStr}</div>
+          <div>${m.completed?`<span class="mc-winner">✓ ${m.winner||'Done'}</span>`:'<span style="color:var(--orange);font-size:0.7rem;">🔴 In Progress</span>'}</div>
+        </div>
+        <div class="mc-scores">
+          <div class="mc-team"><div class="mc-tname">${m.team1}</div><div class="mc-tscore">${d1.runs}/${d1.wickets}</div></div>
+          <div class="mc-team"><div class="mc-tname">${m.team2}</div><div class="mc-tscore">${inn2played?d2.runs+'/'+d2.wickets:'—'}</div></div>
+        </div>
+        <div class="mc-result">${m.result||m.totalOvers+' overs match'} &nbsp;
+          <button class="delete-btn" onclick="event.stopPropagation();delMatch('${m.id}')">🗑 Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    list.innerHTML='<div class="hist-empty">DB error: '+e.message+'</div>';
+  }
+}
+
+async function delMatch(id){
+  await deleteMatch(id);
+  showToast('Match deleted');
+  loadHistory();
+}
+
+async function showMatchDetail(id){
+  const matches=await getAllMatches();
+  const m=matches.find(x=>x.id===id);
+  if(!m) return;
+  goScreen('screen-detail');
+
+  const d1=m.data[0], d2=m.data[1];
+  const inn2=m.innings===2||m.completed;
+
+  function scHTML(d, team){
+    let h=`<div class="card"><div class="card-title">${team}</div>
+    <table class="sc-table"><thead><tr><th>Batsman</th><th>R</th><th>B</th><th>SR</th></tr></thead><tbody>`;
+    d.dismissed.forEach(b=>{
+      const sr=b.balls>0?((b.runs/b.balls)*100).toFixed(1):'0.0';
+      h+=`<tr class="out"><td><div class="bat-name">${b.name}</div><div class="bat-how">${b.how}</div></td><td>${b.runs}</td><td>${b.balls}</td><td>${sr}</td></tr>`;
+    });
+    d.batsmen.forEach(b=>{
+      const sr=b.balls>0?((b.runs/b.balls)*100).toFixed(1):'0.0';
+      h+=`<tr class="notout"><td><div class="bat-name">${b.name}</div><div class="bat-how">not out</div></td><td>${b.runs}</td><td>${b.balls}</td><td>${sr}</td></tr>`;
+    });
+    const ext=(d.extras.wide||0)+(d.extras.nb||0);
+    const legB=d.balls.filter(b=>!b.extra).length;
+    const ovs=Math.floor(legB/6)+'.'+legB%6;
+    h+=`</tbody></table>
+    <div class="sc-foot extras"><span>Extras</span><span>${ext} (${d.extras.wide||0}wd, ${d.extras.nb||0}nb)</span></div>
+    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${ovs} ov)</span></div>
+    </div>`;
+    return h;
+  }
+
+  document.getElementById('detail-content').innerHTML=`
+    <div class="card" style="text-align:center;margin-bottom:10px;">
+      <div style="font-size:0.65rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">${new Date(m.date).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      <div style="font-family:'Teko',sans-serif;font-size:1.3rem;color:var(--lime);margin:6px 0;">${m.result||m.totalOvers+' Overs Match'}</div>
+      ${m.winner?`<div style="font-size:0.8rem;color:var(--muted);">🏆 ${m.winner}</div>`:''}
+    </div>
+    ${scHTML(d1, m.team1)}
+    ${inn2?scHTML(d2, m.team2):''}
+  `;
+}
+
+// ══════════════════════════ AUTO SAVE ══════════════════════════
+async function autoSave(){
+  if(!M||!db) return;
+  try { await saveMatch(JSON.parse(JSON.stringify(M))); }
+  catch(e){ console.warn('Save failed:', e); }
+}
+
+// ══════════════════════════ VOICE ══════════════════════════
+let voiceActive=false, recognition=null, lastVoice='';
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)){
+    showToast('Voice Chrome mein kaam karta hai'); return;
+  }
+  if(voiceActive){ recognition&&recognition.stop(); voiceActive=false; document.getElementById('v-btn').classList.remove('on'); document.getElementById('v-txt').textContent='Voice — Bol ke Score Karo'; return; }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR(); recognition.lang='hi-IN'; recognition.continuous=true; recognition.interimResults=true;
+  recognition.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join(' ').toLowerCase().trim();
+    document.getElementById('v-out').textContent='🎙 '+t;
+    processVoice(t);
+  };
+  recognition.onerror=()=>{ voiceActive=false; document.getElementById('v-btn').classList.remove('on'); };
+  recognition.onend=()=>{ if(voiceActive) recognition.start(); };
+  recognition.start(); voiceActive=true;
+  document.getElementById('v-btn').classList.add('on');
+  document.getElementById('v-txt').textContent='Sun raha hoon... (tap to stop)';
+}
+function processVoice(text){
+  if(text===lastVoice) return;
+  const last=text.split(' ').pop();
+  const map={'dot':()=>addBall('dot',0),'डॉट':()=>addBall('dot',0),'ek':()=>addBall('r1',1),'एक':()=>addBall('r1',1),'one':()=>addBall('r1',1),'do':()=>addBall('r2',2),'दो':()=>addBall('r2',2),'two':()=>addBall('r2',2),'teen':()=>addBall('r3',3),'तीन':()=>addBall('r3',3),'three':()=>addBall('r3',3),'chaar':()=>addBall('r4',4),'चार':()=>addBall('r4',4),'four':()=>addBall('r4',4),'for':()=>addBall('r4',4),'chhakka':()=>addBall('r6',6),'छक्का':()=>addBall('r6',6),'six':()=>addBall('r6',6),'wide':()=>addBall('wd',1,true),'वाइड':()=>addBall('wd',1,true),'wicket':()=>openWktModal(),'विकेट':()=>openWktModal(),'out':()=>openWktModal(),'आउट':()=>openWktModal()};
+  if(map[last]){ map[last](); lastVoice=text; }
+}
+
+// ══════════════════════════ TOAST + OFFLINE ══════════════════════════
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+
+window.addEventListener('offline',()=>{ document.getElementById('offline-badge').classList.add('show'); document.getElementById('offline-indicator').textContent='📴'; document.getElementById('offline-indicator').style.color='#ef9a9a'; });
+window.addEventListener('online',()=>{ document.getElementById('offline-badge').classList.remove('show'); document.getElementById('offline-indicator').textContent='📶'; document.getElementById('offline-indicator').style.color=''; showToast('Back online!'); });
+if(!navigator.onLine){ document.getElementById('offline-badge').classList.add('show'); document.getElementById('offline-indicator').textContent='📴'; }
+
+// ══════════════════════════ SERVICE WORKER ══════════════════════════
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered')).catch(e=>console.log('SW error:',e)); }
+
+// ══════════════════════════ INIT ══════════════════════════
+openDB().then(()=>{ console.log('DB ready'); }).catch(e=>{ console.warn('DB failed:',e); showToast('Storage unavailable'); });
+</script>
+</body>
+</html>
