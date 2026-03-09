@@ -314,22 +314,24 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="card">
         <div class="card-title" style="margin-bottom:8px;">⚔️ AT CREASE</div>
         <div class="batsmen-row">
-          <div class="bcard" id="b0-card">
+          <div class="bcard" id="b0-card" onclick="openEditBatsman(0)">
             <div class="b-name" id="b0-name">Bat 1</div>
             <div class="b-runs" id="b0-runs">0</div>
             <div class="b-meta" id="b0-balls">0b</div>
             <div class="b-sr" id="b0-sr">SR 0.0</div>
+            <div style="font-size:0.55rem;color:var(--muted);margin-top:3px;letter-spacing:0.5px;">✏️ tap to edit</div>
           </div>
           <div class="pmid">
             <div class="p-runs" id="p-runs">0</div>
             <div class="p-lbl">Pship</div>
-            <button class="strike-btn" onclick="toggleStrike()">⇄ Strike</button>
+            <button class="strike-btn" onclick="event.stopPropagation();toggleStrike()">⇄ Strike</button>
           </div>
-          <div class="bcard" id="b1-card">
+          <div class="bcard" id="b1-card" onclick="openEditBatsman(1)">
             <div class="b-name" id="b1-name">Bat 2</div>
             <div class="b-runs" id="b1-runs">0</div>
             <div class="b-meta" id="b1-balls">0b</div>
             <div class="b-sr" id="b1-sr">SR 0.0</div>
+            <div style="font-size:0.55rem;color:var(--muted);margin-top:3px;letter-spacing:0.5px;">✏️ tap to edit</div>
           </div>
         </div>
       </div>
@@ -405,6 +407,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeWktModal()">Cancel</button>
       <button class="mbtn confirm" onclick="confirmWkt()">OUT ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Batsman Modal -->
+<div class="modal-bg" id="edit-bat-modal">
+  <div class="modal">
+    <h3 style="color:var(--lime);">✏️ BATSMAN EDIT</h3>
+    <div class="fg"><label>Player ka Naam</label><input id="edit-bat-name" placeholder="Naam daalo"></div>
+    <div class="fg"><label>Runs (agar sahi karne hain)</label><input id="edit-bat-runs" type="number" min="0" placeholder="Current runs"></div>
+    <div class="fg"><label>Balls Faced</label><input id="edit-bat-balls" type="number" min="0" placeholder="Balls faced"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeEditBatModal()">Cancel</button>
+      <button class="mbtn confirm" style="background:var(--green2);" onclick="confirmEditBat()">Save ✓</button>
     </div>
   </div>
 </div>
@@ -600,6 +616,36 @@ function undoLast(){
   document.getElementById('last-ev').innerHTML='<span>↩ Undone</span>';
   updateUI(); autoSave();
   showToast('Undone!');
+}
+
+// ══════════════════════════ EDIT BATSMAN ══════════════════════════
+let editBatIdx = 0;
+function openEditBatsman(idx){
+  editBatIdx = idx;
+  const b = inn().batsmen[idx];
+  document.getElementById('edit-bat-name').value = b.name;
+  document.getElementById('edit-bat-runs').value = b.runs;
+  document.getElementById('edit-bat-balls').value = b.balls;
+  document.getElementById('edit-bat-modal').classList.add('show');
+}
+function closeEditBatModal(){ document.getElementById('edit-bat-modal').classList.remove('show'); }
+function confirmEditBat(){
+  const d = inn();
+  const name = document.getElementById('edit-bat-name').value.trim();
+  const runs = parseInt(document.getElementById('edit-bat-runs').value)||0;
+  const balls = parseInt(document.getElementById('edit-bat-balls').value)||0;
+
+  // Adjust team runs if runs changed
+  const diff = runs - d.batsmen[editBatIdx].runs;
+  d.runs += diff;
+
+  d.batsmen[editBatIdx].name = name || d.batsmen[editBatIdx].name;
+  d.batsmen[editBatIdx].runs = runs;
+  d.batsmen[editBatIdx].balls = balls;
+
+  closeEditBatModal();
+  updateUI(); autoSave();
+  showToast(`${d.batsmen[editBatIdx].name} updated!`);
 }
 
 // ══════════════════════════ WICKET MODAL ══════════════════════════
