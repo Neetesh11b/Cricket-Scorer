@@ -2,7 +2,7 @@
   "name": "Cricket Scorer Pro",
   "short_name": "Cricket",
   "description": "Ball-by-ball cricket scorer with offline support",
-  "start_url": "/index.html",
+  "start_url": "/cricket-scorer/index.html",
   "display": "standalone",
   "background_color": "#08100a",
   "theme_color": "#08100a",
