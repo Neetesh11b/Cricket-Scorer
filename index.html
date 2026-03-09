@@ -209,7 +209,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <!-- ══════════════ HOME SCREEN ══════════════ -->
   <div id="screen-home" class="screen active">
     <div class="hdr">
-      <h1>🏏 SCORER By Neetesh 🏏</h1>
+      <h1>🏏 SCORER</h1>
       <div class="hdr-right">
         <div class="icon-btn" id="offline-indicator">📶</div>
       </div>
@@ -984,7 +984,16 @@ window.addEventListener('online',()=>{ document.getElementById('offline-badge').
 if(!navigator.onLine){ document.getElementById('offline-badge').classList.add('show'); document.getElementById('offline-indicator').textContent='📴'; }
 
 // ══════════════════════════ SERVICE WORKER ══════════════════════════
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered')).catch(e=>console.log('SW error:',e)); }
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', {scope: './'})
+      .then(reg => {
+        console.log('SW registered, scope:', reg.scope);
+        if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      })
+      .catch(e => console.log('SW error:', e));
+  });
+}
 
 // ══════════════════════════ INIT ══════════════════════════
 openDB().then(()=>{ console.log('DB ready'); }).catch(e=>{ console.warn('DB failed:',e); showToast('Storage unavailable'); });
