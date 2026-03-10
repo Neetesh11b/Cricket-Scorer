@@ -158,6 +158,25 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sc-foot.total{font-weight:700;color:var(--text);border-top:1px solid var(--border);}
 .sc-foot.extras{color:var(--muted);}
 
+/* ── BOWLER SECTION ── */
+.bowler-wrap{background:rgba(255,143,0,0.06);border:1px solid rgba(255,143,0,0.25);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
+.bowler-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.bowler-lbl{font-size:0.62rem;letter-spacing:2px;color:var(--orange);text-transform:uppercase;font-weight:700;}
+.bowler-change{background:rgba(255,143,0,0.12);border:1px solid rgba(255,143,0,0.3);border-radius:6px;padding:4px 10px;color:var(--orange);font-size:0.65rem;font-weight:700;cursor:pointer;letter-spacing:1px;}
+.cur-bowler-name{font-family:'Teko',sans-serif;font-size:1.3rem;color:var(--text);margin-bottom:2px;}
+.cur-bowler-stats{display:flex;gap:14px;}
+.bs-item .bsv{font-family:'Teko',sans-serif;font-size:1rem;color:var(--accent);}
+.bs-item .bsl{font-size:0.55rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+
+/* ── BOWLER TABLE ── */
+.bowl-table{width:100%;border-collapse:collapse;}
+.bowl-table th{font-size:0.55rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:4px 5px;text-align:left;font-weight:600;}
+.bowl-table th:not(:first-child){text-align:right;}
+.bowl-table td{padding:6px 5px;font-size:0.78rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.bowl-table td:not(:first-child){text-align:right;font-family:'Teko',sans-serif;font-size:0.9rem;}
+.bowl-name{font-weight:600;font-size:0.8rem;}
+.bowl-name.current{color:var(--orange);}
+
 /* ── MATCH HISTORY ── */
 .hist-empty{text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;line-height:1.8;}
 .match-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all 0.18s;}
@@ -338,6 +357,22 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="over-lbl" id="over-lbl">OVER 1</div>
       <div class="balls-row" id="cur-balls" style="margin-bottom:10px;"></div>
       <div class="last-ev" id="last-ev"><span>🟢 Ready — Scoring shuru karo!</span></div>
+
+      <!-- BOWLER WIDGET -->
+      <div class="bowler-wrap">
+        <div class="bowler-top">
+          <div class="bowler-lbl">🎯 Bowling</div>
+          <button class="bowler-change" onclick="openChangeBowler()">⇄ Change</button>
+        </div>
+        <div class="cur-bowler-name" id="cur-bowl-name">Select Bowler</div>
+        <div class="cur-bowler-stats">
+          <div class="bs-item"><div class="bsv" id="cb-ov">0</div><div class="bsl">Overs</div></div>
+          <div class="bs-item"><div class="bsv" id="cb-runs">0</div><div class="bsl">Runs</div></div>
+          <div class="bs-item"><div class="bsv" id="cb-wkts">0</div><div class="bsl">Wkts</div></div>
+          <div class="bs-item"><div class="bsv" id="cb-eco">0.00</div><div class="bsl">Economy</div></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="pad-lbl">Ball ka Result</div>
         <div class="btn-grid">
@@ -389,6 +424,19 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 
 </div><!-- /app -->
+
+<!-- Change Bowler Modal -->
+<div class="modal-bg" id="bowler-modal">
+  <div class="modal">
+    <h3 style="color:var(--orange);">🎯 BOWLER SELECT</h3>
+    <div class="fg"><label>Current Bowler ka Naam</label><input id="bowl-input" placeholder="Bowler ka naam daalo"></div>
+    <div id="bowl-suggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeBowlerModal()">Cancel</button>
+      <button class="mbtn confirm" style="background:var(--orange);" onclick="confirmBowler()">Set Bowler ✓</button>
+    </div>
+  </div>
+</div>
 
 <!-- Wicket Modal -->
 <div class="modal-bg" id="wkt-modal">
@@ -507,7 +555,8 @@ function freshInnings(){
   return {
     runs:0, wickets:0, balls:[], curOver:[], extras:{wide:0,nb:0},
     batsmen:[{name:'',runs:0,balls:0,out:false,how:''},{name:'',runs:0,balls:0,out:false,how:''}],
-    dismissed:[], // full list of dismissed batsmen for scorecard
+    dismissed:[],
+    bowlers:[], curBowlerIdx:-1,
     onStrike:0, pRuns:0, pBalls:0, nextBatIdx:2
   };
 }
@@ -560,6 +609,8 @@ function startMatch(){
   showTab('score');
   updateUI();
   autoSave();
+  // Prompt for first bowler
+  setTimeout(()=>openChangeBowler(), 300);
 }
 
 // ══════════════════════════ BALL LOGIC ══════════════════════════
@@ -569,6 +620,8 @@ function addBall(type, runs, isExtra=false){
   d.runs+=runs;
   d.balls.push(ball);
   if(!isExtra) d.curOver.push(ball);
+
+  updateBowlerOnBall(type, runs, isExtra);
 
   const striker=d.batsmen[d.onStrike];
   if(!isExtra){
@@ -586,6 +639,8 @@ function addBall(type, runs, isExtra=false){
     d.curOver=[];
     rotateStrike();
     showToast(`Over ${completedOvers()} — ${ovRuns} runs`);
+    // Prompt to change bowler after over
+    setTimeout(()=>openChangeBowler(), 400);
   }
 
   if(d.wickets>=M.maxWickets||legalBalls()>=M.totalOvers*6){ endInnings(); return; }
@@ -683,6 +738,7 @@ function confirmWkt(){
   const ball={type:'wkt',runs:0,extra:false};
   d.balls.push(ball);
   d.curOver.push(ball);
+  updateBowlerOnBall('wkt',0,false);
 
   closeWktModal();
   if(d.wickets>=M.maxWickets||legalBalls()>=M.totalOvers*6){ endInnings(); return; }
@@ -701,6 +757,7 @@ function endInnings(){
     document.getElementById('ovr-hist').innerHTML='';
     showToast(`${M.team1}: ${M.data[0].runs}/${M.data[0].wickets} — 2nd Innings!`);
     updateUI(); autoSave();
+    setTimeout(()=>openChangeBowler(), 400);
   } else { declareWinner(); }
 }
 
@@ -744,6 +801,75 @@ function showResult(winner, result, d1, d2){
   rv.style.display='block';
 }
 
+// ══════════════════════════ BOWLER LOGIC ══════════════════════════
+function openChangeBowler(){
+  const d = inn();
+  // Build suggestions from fielding team players
+  const fieldTeam = M.innings===1 ? M.players[1] : M.players[0];
+  document.getElementById('bowl-input').value='';
+  const sugg = document.getElementById('bowl-suggestions');
+  sugg.innerHTML = fieldTeam.slice(0,11).map(p=>`
+    <button onclick="selectBowlerSugg('${p}')" style="background:rgba(255,143,0,0.1);border:1px solid rgba(255,143,0,0.25);border-radius:6px;padding:4px 10px;color:var(--orange);font-size:0.72rem;cursor:pointer;">${p}</button>
+  `).join('');
+  // Pre-fill current bowler
+  if(d.curBowlerIdx>=0) document.getElementById('bowl-input').value=d.bowlers[d.curBowlerIdx].name;
+  document.getElementById('bowler-modal').classList.add('show');
+}
+function selectBowlerSugg(name){ document.getElementById('bowl-input').value=name; }
+function closeBowlerModal(){ document.getElementById('bowler-modal').classList.remove('show'); }
+function confirmBowler(){
+  const name = document.getElementById('bowl-input').value.trim();
+  if(!name){ showToast('Bowler ka naam daalo!'); return; }
+  const d = inn();
+  // Check if already exists
+  let idx = d.bowlers.findIndex(b=>b.name.toLowerCase()===name.toLowerCase());
+  if(idx===-1){
+    d.bowlers.push({name, runs:0, balls:0, wickets:0, wides:0, nbs:0});
+    idx = d.bowlers.length-1;
+  }
+  d.curBowlerIdx = idx;
+  closeBowlerModal();
+  updateUI(); autoSave();
+  showToast(`${name} bowling!`);
+}
+
+function updateBowlerOnBall(type, runs, isExtra){
+  const d = inn();
+  if(d.curBowlerIdx<0) return;
+  const b = d.bowlers[d.curBowlerIdx];
+  b.runs += runs;
+  if(!isExtra) b.balls++;
+  if(type==='wd') b.wides++;
+  if(type==='nb') b.nbs++;
+  if(type==='wkt') b.wickets++;
+}
+
+function bowlerEco(b){
+  if(!b.balls) return '0.00';
+  return (b.runs/(b.balls/6)).toFixed(2);
+}
+function bowlerOvStr(b){
+  return Math.floor(b.balls/6)+'.'+b.balls%6;
+}
+
+function renderBowlerWidget(){
+  const d = inn();
+  if(d.curBowlerIdx<0){
+    document.getElementById('cur-bowl-name').textContent='Bowler Select karo ⬆';
+    document.getElementById('cb-ov').textContent='—';
+    document.getElementById('cb-runs').textContent='—';
+    document.getElementById('cb-wkts').textContent='—';
+    document.getElementById('cb-eco').textContent='—';
+    return;
+  }
+  const b = d.bowlers[d.curBowlerIdx];
+  document.getElementById('cur-bowl-name').textContent=b.name;
+  document.getElementById('cb-ov').textContent=bowlerOvStr(b);
+  document.getElementById('cb-runs').textContent=b.runs;
+  document.getElementById('cb-wkts').textContent=b.wickets;
+  document.getElementById('cb-eco').textContent=bowlerEco(b);
+}
+
 // ══════════════════════════ UI UPDATE ══════════════════════════
 function updateUI(){
   const d=inn();
@@ -771,6 +897,7 @@ function updateUI(){
   });
   document.getElementById('p-runs').textContent=d.pRuns;
   renderCurOver();
+  renderBowlerWidget();
   renderScorecard();
 }
 
@@ -826,8 +953,22 @@ function renderScorecard(){
     const ext=(d.extras.wide||0)+(d.extras.nb||0);
     html+=`</tbody></table>
     <div class="sc-foot extras"><span>Extras</span><span>${ext} (${d.extras.wide||0}wd, ${d.extras.nb||0}nb)</span></div>
-    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${i===0?oversStr():oversStr()} ov)</span></div>
-    </div>`;
+    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${i===0?oversStr():oversStr()} ov)</span></div>`;
+
+    // Bowling table
+    if(d.bowlers&&d.bowlers.length){
+      html+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+      <div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:6px;">🎯 BOWLING</div>
+      <table class="bowl-table"><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Eco</th></tr></thead><tbody>`;
+      d.bowlers.forEach((b,bi)=>{
+        const isCur = bi===d.curBowlerIdx;
+        html+=`<tr><td><span class="bowl-name ${isCur?'current':''}">${b.name}${isCur?' *':''}</span></td>
+        <td>${bowlerOvStr(b)}</td><td>${b.runs}</td><td>${b.wickets}</td><td>${bowlerEco(b)}</td></tr>`;
+      });
+      html+=`</tbody></table></div>`;
+    }
+
+    html+=`</div>`;
   });
   document.getElementById('sc-content').innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:20px;font-size:0.85rem;">Scorecard match shuru hone ke baad yahan aayegi</p>';
 }
@@ -926,8 +1067,20 @@ async function showMatchDetail(id){
     const ovs=Math.floor(legB/6)+'.'+legB%6;
     h+=`</tbody></table>
     <div class="sc-foot extras"><span>Extras</span><span>${ext} (${d.extras.wide||0}wd, ${d.extras.nb||0}nb)</span></div>
-    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${ovs} ov)</span></div>
-    </div>`;
+    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${ovs} ov)</span></div>`;
+
+    if(d.bowlers&&d.bowlers.length){
+      h+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+      <div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:6px;">🎯 BOWLING</div>
+      <table class="bowl-table"><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Eco</th></tr></thead><tbody>`;
+      d.bowlers.forEach(b=>{
+        const eco=b.balls>0?(b.runs/(b.balls/6)).toFixed(2):'0.00';
+        const bovs=Math.floor(b.balls/6)+'.'+b.balls%6;
+        h+=`<tr><td><span class="bowl-name">${b.name}</span></td><td>${bovs}</td><td>${b.runs}</td><td>${b.wickets}</td><td>${eco}</td></tr>`;
+      });
+      h+=`</tbody></table></div>`;
+    }
+    h+=`</div>`;
     return h;
   }
 
