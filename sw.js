@@ -1,4 +1,4 @@
-const CACHE = 'cricket-v3';
+const CACHE = 'cricket-v4';
 const ASSETS = [
   './',
   './index.html',

@@ -113,6 +113,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sb.wd{background:rgba(255,143,0,0.14);color:var(--orange);border:1px solid rgba(255,143,0,0.3);font-size:0.85rem;}
 .sb.nb{background:rgba(255,87,34,0.14);color:#ff8a65;border:1px solid rgba(255,87,34,0.3);font-size:0.85rem;}
 .sb.wkt{background:rgba(244,67,54,0.18);color:#ef9a9a;border:1px solid rgba(244,67,54,0.4);grid-column:span 2;font-size:0.95rem;}
+.sb.dead{background:rgba(100,100,100,0.18);color:#aaa;border:1px solid rgba(150,150,150,0.3);grid-column:span 2;font-size:0.85rem;}
 .sb:hover{filter:brightness(1.2);}
 
 /* ── VOICE ── */
@@ -157,25 +158,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sc-foot{display:flex;justify-content:space-between;padding:7px 6px;font-size:0.78rem;}
 .sc-foot.total{font-weight:700;color:var(--text);border-top:1px solid var(--border);}
 .sc-foot.extras{color:var(--muted);}
-
-/* ── BOWLER SECTION ── */
-.bowler-wrap{background:rgba(255,143,0,0.06);border:1px solid rgba(255,143,0,0.25);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
-.bowler-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.bowler-lbl{font-size:0.62rem;letter-spacing:2px;color:var(--orange);text-transform:uppercase;font-weight:700;}
-.bowler-change{background:rgba(255,143,0,0.12);border:1px solid rgba(255,143,0,0.3);border-radius:6px;padding:4px 10px;color:var(--orange);font-size:0.65rem;font-weight:700;cursor:pointer;letter-spacing:1px;}
-.cur-bowler-name{font-family:'Teko',sans-serif;font-size:1.3rem;color:var(--text);margin-bottom:2px;}
-.cur-bowler-stats{display:flex;gap:14px;}
-.bs-item .bsv{font-family:'Teko',sans-serif;font-size:1rem;color:var(--accent);}
-.bs-item .bsl{font-size:0.55rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
-
-/* ── BOWLER TABLE ── */
-.bowl-table{width:100%;border-collapse:collapse;}
-.bowl-table th{font-size:0.55rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:4px 5px;text-align:left;font-weight:600;}
-.bowl-table th:not(:first-child){text-align:right;}
-.bowl-table td{padding:6px 5px;font-size:0.78rem;border-bottom:1px solid rgba(255,255,255,0.04);}
-.bowl-table td:not(:first-child){text-align:right;font-family:'Teko',sans-serif;font-size:0.9rem;}
-.bowl-name{font-weight:600;font-size:0.8rem;}
-.bowl-name.current{color:var(--orange);}
 
 /* ── MATCH HISTORY ── */
 .hist-empty{text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;line-height:1.8;}
@@ -357,22 +339,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="over-lbl" id="over-lbl">OVER 1</div>
       <div class="balls-row" id="cur-balls" style="margin-bottom:10px;"></div>
       <div class="last-ev" id="last-ev"><span>🟢 Ready — Scoring shuru karo!</span></div>
-
-      <!-- BOWLER WIDGET -->
-      <div class="bowler-wrap">
-        <div class="bowler-top">
-          <div class="bowler-lbl">🎯 Bowling</div>
-          <button class="bowler-change" onclick="openChangeBowler()">⇄ Change</button>
-        </div>
-        <div class="cur-bowler-name" id="cur-bowl-name">Select Bowler</div>
-        <div class="cur-bowler-stats">
-          <div class="bs-item"><div class="bsv" id="cb-ov">0</div><div class="bsl">Overs</div></div>
-          <div class="bs-item"><div class="bsv" id="cb-runs">0</div><div class="bsl">Runs</div></div>
-          <div class="bs-item"><div class="bsv" id="cb-wkts">0</div><div class="bsl">Wkts</div></div>
-          <div class="bs-item"><div class="bsv" id="cb-eco">0.00</div><div class="bsl">Economy</div></div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="pad-lbl">Ball ka Result</div>
         <div class="btn-grid">
@@ -385,9 +351,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button class="sb wd" onclick="addBall('wd',1,true)">WIDE</button>
           <button class="sb nb" onclick="addBall('nb',1,true)">NO BALL</button>
           <button class="sb wkt" onclick="openWktModal()">🔴 WICKET OUT</button>
+          <button class="sb dead" onclick="addBall('dead',0,true)">⬛ DEAD BALL</button>
         </div>
         <button class="voice-btn" id="v-btn" onclick="toggleVoice()">🎙️ <span id="v-txt">Voice — Bol ke Score Karo</span></button>
-        <div class="voice-out" id="v-out">Hindi ya English mein bolo: "chaar", "chhakka", "wide", "wicket"...</div>
+        <div class="voice-out" id="v-out">Bolo: "ek" "do" "teen" "chaar" "chhakka" "wide" "wicket" "dot" "dead"</div>
       </div>
       <div class="actions">
         <button class="act undo" onclick="undoLast()">↩ Undo</button>
@@ -424,19 +391,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 
 </div><!-- /app -->
-
-<!-- Change Bowler Modal -->
-<div class="modal-bg" id="bowler-modal">
-  <div class="modal">
-    <h3 style="color:var(--orange);">🎯 BOWLER SELECT</h3>
-    <div class="fg"><label>Current Bowler ka Naam</label><input id="bowl-input" placeholder="Bowler ka naam daalo"></div>
-    <div id="bowl-suggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
-    <div class="modal-btns">
-      <button class="mbtn cancel" onclick="closeBowlerModal()">Cancel</button>
-      <button class="mbtn confirm" style="background:var(--orange);" onclick="confirmBowler()">Set Bowler ✓</button>
-    </div>
-  </div>
-</div>
 
 <!-- Wicket Modal -->
 <div class="modal-bg" id="wkt-modal">
@@ -555,8 +509,7 @@ function freshInnings(){
   return {
     runs:0, wickets:0, balls:[], curOver:[], extras:{wide:0,nb:0},
     batsmen:[{name:'',runs:0,balls:0,out:false,how:''},{name:'',runs:0,balls:0,out:false,how:''}],
-    dismissed:[],
-    bowlers:[], curBowlerIdx:-1,
+    dismissed:[], // full list of dismissed batsmen for scorecard
     onStrike:0, pRuns:0, pBalls:0, nextBatIdx:2
   };
 }
@@ -609,19 +562,17 @@ function startMatch(){
   showTab('score');
   updateUI();
   autoSave();
-  // Prompt for first bowler
-  setTimeout(()=>openChangeBowler(), 300);
 }
 
 // ══════════════════════════ BALL LOGIC ══════════════════════════
 function addBall(type, runs, isExtra=false){
+  // Dead ball — kuch nahi hota, sirf toast
+  if(type==='dead'){ showToast('⬛ Dead Ball — no count'); setLastEv('dead',0); return; }
   const d=inn();
   const ball={type,runs,extra:isExtra};
   d.runs+=runs;
   d.balls.push(ball);
   if(!isExtra) d.curOver.push(ball);
-
-  updateBowlerOnBall(type, runs, isExtra);
 
   const striker=d.batsmen[d.onStrike];
   if(!isExtra){
@@ -639,8 +590,6 @@ function addBall(type, runs, isExtra=false){
     d.curOver=[];
     rotateStrike();
     showToast(`Over ${completedOvers()} — ${ovRuns} runs`);
-    // Prompt to change bowler after over
-    setTimeout(()=>openChangeBowler(), 400);
   }
 
   if(d.wickets>=M.maxWickets||legalBalls()>=M.totalOvers*6){ endInnings(); return; }
@@ -738,7 +687,6 @@ function confirmWkt(){
   const ball={type:'wkt',runs:0,extra:false};
   d.balls.push(ball);
   d.curOver.push(ball);
-  updateBowlerOnBall('wkt',0,false);
 
   closeWktModal();
   if(d.wickets>=M.maxWickets||legalBalls()>=M.totalOvers*6){ endInnings(); return; }
@@ -757,7 +705,6 @@ function endInnings(){
     document.getElementById('ovr-hist').innerHTML='';
     showToast(`${M.team1}: ${M.data[0].runs}/${M.data[0].wickets} — 2nd Innings!`);
     updateUI(); autoSave();
-    setTimeout(()=>openChangeBowler(), 400);
   } else { declareWinner(); }
 }
 
@@ -801,75 +748,6 @@ function showResult(winner, result, d1, d2){
   rv.style.display='block';
 }
 
-// ══════════════════════════ BOWLER LOGIC ══════════════════════════
-function openChangeBowler(){
-  const d = inn();
-  // Build suggestions from fielding team players
-  const fieldTeam = M.innings===1 ? M.players[1] : M.players[0];
-  document.getElementById('bowl-input').value='';
-  const sugg = document.getElementById('bowl-suggestions');
-  sugg.innerHTML = fieldTeam.slice(0,11).map(p=>`
-    <button onclick="selectBowlerSugg('${p}')" style="background:rgba(255,143,0,0.1);border:1px solid rgba(255,143,0,0.25);border-radius:6px;padding:4px 10px;color:var(--orange);font-size:0.72rem;cursor:pointer;">${p}</button>
-  `).join('');
-  // Pre-fill current bowler
-  if(d.curBowlerIdx>=0) document.getElementById('bowl-input').value=d.bowlers[d.curBowlerIdx].name;
-  document.getElementById('bowler-modal').classList.add('show');
-}
-function selectBowlerSugg(name){ document.getElementById('bowl-input').value=name; }
-function closeBowlerModal(){ document.getElementById('bowler-modal').classList.remove('show'); }
-function confirmBowler(){
-  const name = document.getElementById('bowl-input').value.trim();
-  if(!name){ showToast('Bowler ka naam daalo!'); return; }
-  const d = inn();
-  // Check if already exists
-  let idx = d.bowlers.findIndex(b=>b.name.toLowerCase()===name.toLowerCase());
-  if(idx===-1){
-    d.bowlers.push({name, runs:0, balls:0, wickets:0, wides:0, nbs:0});
-    idx = d.bowlers.length-1;
-  }
-  d.curBowlerIdx = idx;
-  closeBowlerModal();
-  updateUI(); autoSave();
-  showToast(`${name} bowling!`);
-}
-
-function updateBowlerOnBall(type, runs, isExtra){
-  const d = inn();
-  if(d.curBowlerIdx<0) return;
-  const b = d.bowlers[d.curBowlerIdx];
-  b.runs += runs;
-  if(!isExtra) b.balls++;
-  if(type==='wd') b.wides++;
-  if(type==='nb') b.nbs++;
-  if(type==='wkt') b.wickets++;
-}
-
-function bowlerEco(b){
-  if(!b.balls) return '0.00';
-  return (b.runs/(b.balls/6)).toFixed(2);
-}
-function bowlerOvStr(b){
-  return Math.floor(b.balls/6)+'.'+b.balls%6;
-}
-
-function renderBowlerWidget(){
-  const d = inn();
-  if(d.curBowlerIdx<0){
-    document.getElementById('cur-bowl-name').textContent='Bowler Select karo ⬆';
-    document.getElementById('cb-ov').textContent='—';
-    document.getElementById('cb-runs').textContent='—';
-    document.getElementById('cb-wkts').textContent='—';
-    document.getElementById('cb-eco').textContent='—';
-    return;
-  }
-  const b = d.bowlers[d.curBowlerIdx];
-  document.getElementById('cur-bowl-name').textContent=b.name;
-  document.getElementById('cb-ov').textContent=bowlerOvStr(b);
-  document.getElementById('cb-runs').textContent=b.runs;
-  document.getElementById('cb-wkts').textContent=b.wickets;
-  document.getElementById('cb-eco').textContent=bowlerEco(b);
-}
-
 // ══════════════════════════ UI UPDATE ══════════════════════════
 function updateUI(){
   const d=inn();
@@ -897,7 +775,6 @@ function updateUI(){
   });
   document.getElementById('p-runs').textContent=d.pRuns;
   renderCurOver();
-  renderBowlerWidget();
   renderScorecard();
 }
 
@@ -910,11 +787,11 @@ function renderCurOver(){
 }
 
 function bClass(b){
-  if(b.type==='wkt') return 'wkt'; if(b.type==='wd') return 'wd'; if(b.type==='nb') return 'nb';
+  if(b.type==='wkt') return 'wkt'; if(b.type==='wd') return 'wd'; if(b.type==='nb') return 'nb'; if(b.type==='dead') return 'dot';
   return {dot:'dot',r1:'r1',r2:'r2',r3:'r3',r4:'r4',r6:'r6'}[b.type]||'dot';
 }
 function bLabel(b){
-  if(b.type==='wkt') return 'W'; if(b.type==='wd') return 'WD'; if(b.type==='nb') return 'NB';
+  if(b.type==='wkt') return 'W'; if(b.type==='wd') return 'WD'; if(b.type==='nb') return 'NB'; if(b.type==='dead') return 'DB';
   return b.runs.toString();
 }
 function bmStyle(b){
@@ -953,28 +830,14 @@ function renderScorecard(){
     const ext=(d.extras.wide||0)+(d.extras.nb||0);
     html+=`</tbody></table>
     <div class="sc-foot extras"><span>Extras</span><span>${ext} (${d.extras.wide||0}wd, ${d.extras.nb||0}nb)</span></div>
-    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${i===0?oversStr():oversStr()} ov)</span></div>`;
-
-    // Bowling table
-    if(d.bowlers&&d.bowlers.length){
-      html+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
-      <div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:6px;">🎯 BOWLING</div>
-      <table class="bowl-table"><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Eco</th></tr></thead><tbody>`;
-      d.bowlers.forEach((b,bi)=>{
-        const isCur = bi===d.curBowlerIdx;
-        html+=`<tr><td><span class="bowl-name ${isCur?'current':''}">${b.name}${isCur?' *':''}</span></td>
-        <td>${bowlerOvStr(b)}</td><td>${b.runs}</td><td>${b.wickets}</td><td>${bowlerEco(b)}</td></tr>`;
-      });
-      html+=`</tbody></table></div>`;
-    }
-
-    html+=`</div>`;
+    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${i===0?oversStr():oversStr()} ov)</span></div>
+    </div>`;
   });
   document.getElementById('sc-content').innerHTML=html||'<p style="color:var(--muted);text-align:center;padding:20px;font-size:0.85rem;">Scorecard match shuru hone ke baad yahan aayegi</p>';
 }
 
 function setLastEv(type,runs){
-  const msgs={dot:'⚪ Dot Ball',r1:'🟢 1 Run',r2:'🟢 2 Runs',r3:'🟢 3 Runs',r4:'🔵 FOUR! +4',r6:'⭐ SIX! +6',wd:'🟠 Wide (+1)',nb:'🔴 No Ball (+1)',wkt:'💥 WICKET!'};
+  const msgs={dot:'⚪ Dot Ball',r1:'🟢 1 Run',r2:'🟢 2 Runs',r3:'🟢 3 Runs',r4:'🔵 FOUR! +4',r6:'⭐ SIX! +6',wd:'🟠 Wide (+1)',nb:'🔴 No Ball (+1)',wkt:'💥 WICKET!',dead:'⬛ Dead Ball'};
   document.getElementById('last-ev').innerHTML=`<span class="ev">${msgs[type]||type}</span>`;
 }
 
@@ -1067,20 +930,8 @@ async function showMatchDetail(id){
     const ovs=Math.floor(legB/6)+'.'+legB%6;
     h+=`</tbody></table>
     <div class="sc-foot extras"><span>Extras</span><span>${ext} (${d.extras.wide||0}wd, ${d.extras.nb||0}nb)</span></div>
-    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${ovs} ov)</span></div>`;
-
-    if(d.bowlers&&d.bowlers.length){
-      h+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
-      <div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--orange);font-weight:700;margin-bottom:6px;">🎯 BOWLING</div>
-      <table class="bowl-table"><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th><th>Eco</th></tr></thead><tbody>`;
-      d.bowlers.forEach(b=>{
-        const eco=b.balls>0?(b.runs/(b.balls/6)).toFixed(2):'0.00';
-        const bovs=Math.floor(b.balls/6)+'.'+b.balls%6;
-        h+=`<tr><td><span class="bowl-name">${b.name}</span></td><td>${bovs}</td><td>${b.runs}</td><td>${b.wickets}</td><td>${eco}</td></tr>`;
-      });
-      h+=`</tbody></table></div>`;
-    }
-    h+=`</div>`;
+    <div class="sc-foot total"><span>TOTAL</span><span>${d.runs}/${d.wickets} (${ovs} ov)</span></div>
+    </div>`;
     return h;
   }
 
@@ -1123,10 +974,31 @@ function toggleVoice(){
   document.getElementById('v-txt').textContent='Sun raha hoon... (tap to stop)';
 }
 function processVoice(text){
-  if(text===lastVoice) return;
-  const last=text.split(' ').pop();
-  const map={'dot':()=>addBall('dot',0),'डॉट':()=>addBall('dot',0),'ek':()=>addBall('r1',1),'एक':()=>addBall('r1',1),'one':()=>addBall('r1',1),'do':()=>addBall('r2',2),'दो':()=>addBall('r2',2),'two':()=>addBall('r2',2),'teen':()=>addBall('r3',3),'तीन':()=>addBall('r3',3),'three':()=>addBall('r3',3),'chaar':()=>addBall('r4',4),'चार':()=>addBall('r4',4),'four':()=>addBall('r4',4),'for':()=>addBall('r4',4),'chhakka':()=>addBall('r6',6),'छक्का':()=>addBall('r6',6),'six':()=>addBall('r6',6),'wide':()=>addBall('wd',1,true),'वाइड':()=>addBall('wd',1,true),'wicket':()=>openWktModal(),'विकेट':()=>openWktModal(),'out':()=>openWktModal(),'आउट':()=>openWktModal()};
-  if(map[last]){ map[last](); lastVoice=text; }
+  const commands=[
+    {words:['dead ball','dead','डेड'],                                    fn:()=>addBall('dead',0,true)},
+    {words:['wicket','विकेट','out','आउट','आउट हो गया'],                  fn:()=>openWktModal()},
+    {words:['wide','वाइड','वाईड'],                                        fn:()=>addBall('wd',1,true)},
+    {words:['no ball','नो बॉल'],                                          fn:()=>addBall('nb',1,true)},
+    {words:['chhakka','छक्का','six','sixer','chha','छह'],                 fn:()=>addBall('r6',6)},
+    {words:['chaar','चार','four','for','char','boundary','चौका'],         fn:()=>addBall('r4',4)},
+    {words:['teen','तीन','three','tin'],                                   fn:()=>addBall('r3',3)},
+    {words:['do','दो','two','doe'],                                        fn:()=>addBall('r2',2)},
+    {words:['ek','एक','one','single','ik'],                               fn:()=>addBall('r1',1)},
+    {words:['dot','डॉट','zero','शून्य','duck'],                           fn:()=>addBall('dot',0)},
+  ];
+  for(const cmd of commands){
+    for(const w of cmd.words){
+      const regex=new RegExp('(^|\\s)'+w.replace(' ','\\s')+'($|\\s)','i');
+      if(regex.test(text)){
+        const key=w+'|'+text.length;
+        if(lastVoice===key) break;
+        lastVoice=key;
+        cmd.fn();
+        document.getElementById('v-out').textContent='✅ Suna: '+w.toUpperCase();
+        return;
+      }
+    }
+  }
 }
 
 // ══════════════════════════ TOAST + OFFLINE ══════════════════════════
