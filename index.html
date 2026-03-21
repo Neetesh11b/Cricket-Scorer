@@ -381,8 +381,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button class="sb r3" onclick="addBall('r3',3)">3</button>
           <button class="sb r4" onclick="addBall('r4',4)">4️⃣ FOUR</button>
           <button class="sb r6" onclick="addBall('r6',6)">⚡ SIX ⚡</button>
-          <button class="sb wd" onclick="addBall('wd',1,true)">WIDE</button>
-          <button class="sb nb" onclick="addBall('nb',1,true)">NO BALL</button>
+          <!-- <button class="sb wd" onclick="addBall('wd',1,true)">WIDE</button> -->
+          <button class="sb wd" disabled style="opacity:0.3;cursor:not-allowed;">WIDE</button>
+          <!-- <button class="sb nb" onclick="addBall('nb',1,true)">NO BALL</button> -->
+           <button class="sb nb" disabled style="opacity:0.3;cursor:not-allowed;">NO BALL</button>
           <button class="sb wkt" onclick="openWktModal()">🔴 WICKET OUT</button>
           <button class="sb dead" onclick="addBall('dead',0,true)">⬛ DEAD BALL</button>
         </div>
