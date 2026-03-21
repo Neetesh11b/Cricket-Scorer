@@ -763,7 +763,11 @@ function endInnings(){
 function declareWinner(){
   const d1=M.data[0],d2=M.data[1],tgt=d1.runs+1;
   let winner,result;
-  if(d2.runs>=tgt){ const w=M.maxWickets-d2.wickets; winner=M.team2; result=`${M.team2} won by ${w} wicket${w!==1?'s':''}`; }
+   if(d2.runs===d1.runs){
+    // TIE!
+    winner=''; result=`Match Tied! ${M.team1} ${d1.runs}/${d1.wickets} vs ${M.team2} ${d2.runs}/${d2.wickets}`;
+  }
+  else if(d2.runs>=tgt){ const w=M.maxWickets-d2.wickets; winner=M.team2; result=`${M.team2} won by ${w} wicket${w!==1?'s':''}`; }
   else { const r=d1.runs-d2.runs; winner=M.team1; result=`${M.team1} won by ${r} run${r!==1?'s':''}`; }
 
   M.completed=true; M.result=result; M.winner=winner;
@@ -780,7 +784,7 @@ function showResult(winner, result, d1, d2){
   if(!rv){ rv=document.createElement('div'); rv.id='inline-result'; gs.appendChild(rv); }
   rv.innerHTML=`<div class="result-wrap">
     <div class="res-trophy">🏆</div>
-    <div class="res-title">${winner} WINS!</div>
+    <div class="res-title">${winner ? winner+' WINS!' : '🤝 TIE!'}</div>
     <div class="res-sub">${result}</div>
     <div class="res-cards">
       <div class="res-card"><div class="rc-t">${M.team1}</div><div class="rc-s">${d1.runs}/${d1.wickets}</div></div>
