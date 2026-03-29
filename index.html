@@ -219,6 +219,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 /* ── OFFLINE BADGE ── */
 .offline-badge{display:none;position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(244,67,54,0.85);border-radius:20px;padding:5px 14px;font-size:0.72rem;font-weight:600;color:white;z-index:100;letter-spacing:1px;}
 .offline-badge.show{display:block;}
+
+/* ── NB RUNS MODAL ── */
+.nb-runs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.nb-run-btn{padding:18px 8px;border:2px solid rgba(255,87,34,0.35);border-radius:12px;background:rgba(255,87,34,0.1);color:#ff8a65;font-family:'Teko',sans-serif;font-size:1.5rem;cursor:pointer;transition:all 0.15s;text-align:center;}
+.nb-run-btn:hover,.nb-run-btn.selected{background:rgba(255,87,34,0.28);border-color:#ff5722;color:#fff;transform:scale(1.05);}
+.nb-run-btn.run4{background:rgba(41,182,246,0.12);border-color:rgba(41,182,246,0.4);color:#81d4fa;}
+.nb-run-btn.run4:hover,.nb-run-btn.run4.selected{background:rgba(41,182,246,0.28);border-color:var(--blue);color:#fff;}
+.nb-run-btn.run6{background:rgba(255,202,40,0.12);border-color:rgba(255,202,40,0.4);color:var(--accent);}
+.nb-run-btn.run6:hover,.nb-run-btn.run6.selected{background:rgba(255,202,40,0.28);border-color:var(--accent);color:#fff;}
+.nb-info{font-size:0.72rem;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6;}
+.nb-total-badge{display:inline-block;background:rgba(255,87,34,0.2);border:1px solid rgba(255,87,34,0.4);border-radius:20px;padding:3px 12px;color:#ff8a65;font-family:'Teko',sans-serif;font-size:1.1rem;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -382,7 +393,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <button class="sb r4" onclick="addBall('r4',4)">4️⃣ FOUR</button>
           <button class="sb r6" onclick="addBall('r6',6)">⚡ SIX ⚡</button>
           <!-- <button class="sb wd" onclick="addBall('wd',1,true)">WIDE</button> -->
-          <button class="sb nb" onclick="addBall('nb',0,true)">NO BALL</button>
+          <button class="sb nb" onclick="openNBModal()">NO BALL</button>
           <button class="sb wd" disabled style="opacity:0.3;cursor:not-allowed;">WIDE</button>
            <!-- <button class="sb nb" disabled style="opacity:0.3;cursor:not-allowed;">NO BALL</button> -->
           <button class="sb wkt" onclick="openWktModal()">🔴 WICKET OUT</button>
@@ -483,6 +494,29 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="modal-btns">
       <button class="mbtn cancel" onclick="closeExitModal()">Continue</button>
       <button class="mbtn confirm" style="background:var(--orange);" onclick="exitMatch()">Exit</button>
+    </div>
+  </div>
+</div>
+
+<!-- No Ball Runs Modal -->
+<div class="modal-bg" id="nb-modal">
+  <div class="modal">
+    <h3 style="color:#ff5722;">🔴 NO BALL — Runs?</h3>
+    <div class="nb-info">
+      No Ball pe automatically +1 extra milta hai.<br>
+      Batsman ne kitne runs banaye? <span class="nb-total-badge" id="nb-total-badge">Total: 1</span>
+    </div>
+    <div class="nb-runs-grid">
+      <button class="nb-run-btn selected" id="nb-btn-0" onclick="selectNBRun(0)">0<br><span style="font-size:0.6rem;opacity:0.7;">bat runs</span></button>
+      <button class="nb-run-btn" id="nb-btn-1" onclick="selectNBRun(1)">1<br><span style="font-size:0.6rem;opacity:0.7;">bat runs</span></button>
+      <button class="nb-run-btn" id="nb-btn-2" onclick="selectNBRun(2)">2<br><span style="font-size:0.6rem;opacity:0.7;">bat runs</span></button>
+      <button class="nb-run-btn" id="nb-btn-3" onclick="selectNBRun(3)">3<br><span style="font-size:0.6rem;opacity:0.7;">bat runs</span></button>
+      <button class="nb-run-btn run4" id="nb-btn-4" onclick="selectNBRun(4)">4️⃣<br><span style="font-size:0.6rem;opacity:0.7;">FOUR</span></button>
+      <button class="nb-run-btn run6" id="nb-btn-6" onclick="selectNBRun(6)">⚡6<br><span style="font-size:0.6rem;opacity:0.7;">SIX</span></button>
+    </div>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeNBModal()">Cancel</button>
+      <button class="mbtn confirm" style="background:#ff5722;" onclick="confirmNB()">Add NB ✓</button>
     </div>
   </div>
 </div>
@@ -1085,6 +1119,74 @@ async function autoSave(){
   catch(e){ console.warn('Save failed:', e); }
 }
 
+// ══════════════════════════ NO BALL MODAL ══════════════════════════
+let selectedNBRuns = 0;
+
+function openNBModal(){
+  selectedNBRuns = 0;
+  // Reset all buttons
+  [0,1,2,3,4,6].forEach(r => {
+    const btn = document.getElementById('nb-btn-'+r);
+    if(btn) btn.classList.remove('selected');
+  });
+  document.getElementById('nb-btn-0').classList.add('selected');
+  document.getElementById('nb-total-badge').textContent = 'Total: 1';
+  document.getElementById('nb-modal').classList.add('show');
+}
+
+function closeNBModal(){
+  document.getElementById('nb-modal').classList.remove('show');
+}
+
+function selectNBRun(runs){
+  selectedNBRuns = runs;
+  [0,1,2,3,4,6].forEach(r => {
+    const btn = document.getElementById('nb-btn-'+r);
+    if(btn) btn.classList.remove('selected');
+  });
+  document.getElementById('nb-btn-'+runs).classList.add('selected');
+  // Total = 1 (no ball extra) + batsman runs
+  document.getElementById('nb-total-badge').textContent = 'Total: '+(1+runs);
+}
+
+function confirmNB(){
+  closeNBModal();
+  const d = inn();
+  const batRuns = selectedNBRuns;
+  const totalRuns = 1 + batRuns; // 1 extra + bat runs
+
+  // Add to team score
+  d.runs += totalRuns;
+  d.extras.nb = (d.extras.nb||0) + 1;
+
+  // Bat runs go to striker
+  if(batRuns > 0){
+    d.batsmen[d.onStrike].runs += batRuns;
+    d.pRuns += batRuns;
+    // No ball doesn't count as a legal ball faced — balls NOT incremented
+  }
+
+  // Record ball as extra (no count in over)
+  const ball = {type:'nb', runs:totalRuns, extra:true};
+  d.balls.push(ball);
+
+  // Update bowler stats
+  updateBowlerOnBall('nb', totalRuns, true);
+
+  // Rotate strike on 1 or 3 bat runs (odd)
+  if(batRuns === 1 || batRuns === 3) rotateStrike();
+
+  // Label for last event
+  const evLabel = batRuns === 0 ? '🔴 No Ball (+1)' :
+    batRuns === 4 ? '🔴 No Ball + FOUR! (+5)' :
+    batRuns === 6 ? '🔴 No Ball + SIX! (+7)' :
+    `🔴 No Ball + ${batRuns} runs (+${totalRuns})`;
+  document.getElementById('last-ev').innerHTML=`<span class="ev">${evLabel}</span>`;
+
+  updateUI(); autoSave();
+  showToast(`No Ball! +${totalRuns} run${totalRuns!==1?'s':''} 🔴`);
+}
+
 // ══════════════════════════ VOICE ══════════════════════════
 let voiceActive=false, recognition=null, lastVoice='';
 function toggleVoice(){
@@ -1110,7 +1212,7 @@ function processVoice(text){
     {words:['dead ball','dead','डेड'],                                    fn:()=>addBall('dead',0,true)},
     {words:['wicket','विकेट','out','आउट','आउट हो गया'],                  fn:()=>openWktModal()},
     {words:['wide','वाइड','वाईड'],                                        fn:()=>addBall('wd',1,true)},
-    {words:['no ball','नो बॉल'],                                          fn:()=>addBall('nb',1,true)},
+    {words:['no ball','नो बॉल'],                                          fn:()=>openNBModal()},
     {words:['chhakka','छक्का','six','sixer','chha','छह'],                 fn:()=>addBall('r6',6)},
     {words:['chaar','चार','four','for','char','boundary','चौका'],         fn:()=>addBall('r4',4)},
     {words:['teen','तीन','three','tin'],                                   fn:()=>addBall('r3',3)},
